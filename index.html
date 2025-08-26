@@ -3,562 +3,355 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>混凝土工程管理系統</title>
+    <title>A4 列印模板 (含下拉選單)</title>
+    <!-- 引入 Tailwind CSS 以快速美化非列印元素 -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', 'Noto Sans TC', sans-serif; background-color: #f0f2f5; }
-        .btn { transition: all 0.2s ease-in-out; }
-        .btn:active { transform: scale(0.97); }
-        .table-wrapper { max-height: 450px; overflow-y: auto; }
-        .table-wrapper::-webkit-scrollbar { width: 6px; }
-        .table-wrapper::-webkit-scrollbar-track { background: #f1f1f1; }
-        .table-wrapper::-webkit-scrollbar-thumb { background: #a8a8a8; border-radius: 3px; }
-        .table-wrapper::-webkit-scrollbar-thumb:hover { background: #7a7a7a; }
-        .form-input { transition: all 0.3s ease; }
-        .form-input:focus { box-shadow: 0 0 0 2px #3b82f6; border-color: #3b82f6; }
-        .modal-backdrop { transition: opacity 0.3s ease; }
-        .modal-content { transition: transform 0.3s ease; }
-        .status-dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        /* Google Fonts - Inter */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* 淺灰色背景 */
+        }
+
+        /* 針對列印的樣式 */
+        @media print {
+            /* 隱藏所有不需要列印的元素 */
+            .no-print {
+                display: none !important;
+            }
+            .print-only-name {
+                display: inline-block !important;
+            }
+
+            /* 確保列印頁面沒有多餘的邊距 */
+            @page {
+                size: A4;
+                margin: 0;
+            }
+
+            body {
+                margin: 0;
+                padding: 0;
+                background-color: #fff; /* 列印時背景為白色 */
+            }
+            
+            /* 列印時，頁面容器填滿整個頁面 */
+            .page-container {
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+                border: none;
+            }
+            
+            /* 列印時移除格子的外框和 placeholder */
+            .grid-cell {
+                color: #000 !important;
+            }
+            .grid-cell:focus-within {
+                outline: none !important;
+            }
+        }
+
+        /* A4 頁面容器的樣式 (用於預覽) */
+        /* A4 尺寸: 210mm x 297mm */
+        .page-container {
+            width: 210mm;
+            height: 297mm;
+            background-color: white;
+            margin: 2rem auto; /* 在螢幕上置中顯示 */
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-sizing: border-box; /* 確保 padding 不會增加寬高 */
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* 水平置中網格 */
+            padding-top: 2cm;   /* 上邊距 2cm */
+            padding-bottom: 2cm;/* 下邊距 2cm */
+        }
+
+        /* 網格容器 */
+        .grid-container {
+            display: grid;
+            /* 4 欄，每欄 4.5cm */
+            grid-template-columns: repeat(4, 4.5cm);
+            /* 5 列，每列 5cm */
+            grid-template-rows: repeat(5, 5cm);
+            gap: 0; /* 儲存格之間沒有間距 */
+            border-left: 1px solid #ccc; /* 加上左邊框和上邊框以形成完整網格 */
+            border-top: 1px solid #ccc;
+        }
+
+        /* 網格中的儲存格 */
+        .grid-cell {
+            width: 100%; /* 寬度由 grid 控制 */
+            height: 5cm;
+            border-right: 1px solid #ccc; /* 儲存格的右邊框和下邊框 */
+            border-bottom: 1px solid #ccc;
+            box-sizing: border-box; /* 確保邊框不會增加儲存格大小 */
+            padding: 8px; /* 增加內邊距 */
+            overflow: hidden; /* 防止內容溢出 */
+            color: #1f2937; /* 輸入的文字顏色 */
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 當點擊儲存格進行編輯時，顯示藍色外框 */
+        .grid-cell:focus-within {
+            outline: 2px solid #3b82f6;
+            outline-offset: -2px; /* 讓外框在格子內部 */
+        }
+        
+        /* 合併後的儲存格樣式 (僅作為標記) */
+        .merged-cell {
+           /* 實際的合併樣式由 JavaScript 動態設定 */
+        }
+
+        .cell-header {
+            flex-shrink: 0;
+            margin-bottom: 4px;
+        }
+
+        .personnel-select {
+            border: none;
+            border-bottom: 1px solid #000;
+            background: transparent;
+            padding: 0 4px;
+            font-size: 14px;
+        }
+        .personnel-select:focus {
+            outline: none;
+        }
+
+        .print-only-name {
+            display: none; /* 螢幕上隱藏 */
+            min-width: 100px; /* 給予足夠寬度 */
+            border-bottom: 1px solid #000;
+            text-align: center;
+            padding: 0 4px;
+        }
+
+        .editable-content {
+            flex-grow: 1;
+            word-wrap: break-word;
+        }
+        .editable-content:focus {
+            outline: none;
+        }
+        .editable-content:empty::before {
+            content: '在此輸入內容...';
+            color: #9ca3af;
+            pointer-events: none;
+        }
+
     </style>
 </head>
-<body class="antialiased text-gray-800">
+<body class="bg-gray-100">
 
-    <div id="alert-container" class="fixed top-5 right-5 z-50 space-y-2"></div>
-
-    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
-
-        <header class="mb-8 text-center relative">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">混凝土工程管理App</h1>
-            <p class="text-gray-600 mt-2">整合澆置紀錄、車輛追蹤與智慧試體提醒</p>
-            <div class="absolute top-0 right-0 flex flex-col items-end space-y-2">
-                 <div id="syncStatus" class="text-sm text-gray-500 bg-gray-100 p-2 rounded-md inline-flex items-center"><span class="status-dot bg-yellow-400"></span><span id="syncStatusText">連線中...</span></div>
-                <div id="userInfo" class="text-sm text-gray-500 bg-gray-100 p-2 rounded-md inline-block">載入使用者資訊...</div>
-            </div>
-        </header>
-
-        <div id="dailySetupSection" class="bg-white p-6 rounded-xl shadow-lg mb-8">
-            <h2 class="text-2xl font-semibold mb-4">每日工班設定</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                <div><label for="dailyProjectName" class="block text-sm font-medium text-gray-700">工程名稱</label><input type="text" id="dailyProjectName" class="form-input mt-1 block w-full" placeholder="例如：惠民安居"></div>
-                <div><label for="dailySupplier" class="block text-sm font-medium text-gray-700">供應商</label><input type="text" id="dailySupplier" class="form-input mt-1 block w-full" placeholder="例如：國產"></div>
-                <button id="startDayButton" class="btn w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md shadow-md">開始今日作業</button>
-            </div>
-        </div>
-        
-        <main id="mainApp" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-1 space-y-8">
-                <div class="bg-white p-6 rounded-xl shadow-lg">
-                    <h2 class="text-2xl font-semibold mb-4 border-b pb-3">當前澆置狀態</h2>
-                    <div class="space-y-2"><p class="text-gray-600"><strong>工程：</strong><span id="displayProjectName"></span></p><p class="text-gray-600"><strong>廠商：</strong><span id="displaySupplier"></span></p><button id="changeSettingsButton" class="text-xs text-blue-500 hover:underline">修改設定</button></div>
-                    <div id="pouringStatus" class="mt-4 space-y-3 text-gray-700">
-                        <p>請在下方表單輸入澆置位置以追蹤進度。</p>
-                        <div class="text-lg font-bold">今日累計方數：<span id="totalVolumeToday" class="text-blue-600">0 m³</span></div>
-                        <div id="specimenAlerts"></div>
-                        <div id="slumpCheckReminder" class="hidden mt-2 p-3 rounded-md bg-yellow-100 text-yellow-800 font-bold text-center">請辦理坍度自檢 (非強制)</div>
-                        <div id="delayedSampleReminder" class="hidden mt-2 p-3 rounded-md bg-red-100 text-red-800 font-bold text-center">延後的試體尚未取樣！</div>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-xl shadow-lg">
-                    <h2 class="text-2xl font-semibold mb-6 border-b pb-3">登記車輛</h2>
-                    <form id="addTruckForm" class="space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <div><label for="pourLocation" class="block text-sm font-medium text-gray-700">澆置位置</label><input type="text" id="pourLocation" required class="form-input mt-1 block w-full" placeholder="B1F 版、柱"></div>
-                            <div><label for="mixingTime" class="block text-sm font-medium text-gray-700">拌合時間</label><input type="time" id="mixingTime" required class="form-input mt-1 block w-full"></div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div><label for="truckNumber" class="block text-sm font-medium text-gray-700">車號</label><input type="text" id="truckNumber" required class="form-input mt-1 block w-full" placeholder="ABC-1234"></div>
-                            <div><label for="volume" class="block text-sm font-medium text-gray-700">方數 (m³)</label><input type="number" id="volume" step="0.1" required class="form-input mt-1 block w-full" placeholder="6.5"></div>
-                        </div>
-                        <div><label for="concreteStrength" class="block text-sm font-medium text-gray-700">強度 (kgf/cm²)</label><input type="text" id="concreteStrength" required class="form-input mt-1 block w-full" placeholder="280"></div>
-                        
-                        <div id="samplingOptions" class="hidden space-y-2 p-3 bg-gray-50 rounded-md">
-                            <label class="flex items-center"><input type="checkbox" id="earlySampleCheckbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"><span class="ml-2 text-sm text-gray-900">提前取樣</span></label>
-                            <label class="flex items-center"><input type="checkbox" id="delaySampleCheckbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"><span class="ml-2 text-sm text-gray-900">延後取樣 (1-2車)</span></label>
-                        </div>
-
-                        <div id="slumpField" class="hidden">
-                            <label for="slump" class="block text-sm font-medium text-gray-700">坍度 (cm)</label>
-                            <input type="text" id="slump" class="form-input mt-1 block w-full" placeholder="15">
-                        </div>
-                        <div id="otherSamplingFields" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div><label for="chloride" class="block text-sm font-medium text-gray-700">氯離子</label><input type="text" id="chloride" class="form-input mt-1 block w-full" placeholder="0.15"></div>
-                             <div><label for="temperature" class="block text-sm font-medium text-gray-700">溫度 (°C)</label><input type="text" id="temperature" class="form-input mt-1 block w-full" placeholder="30"></div>
-                        </div>
-
-                        <div><label for="remarks" class="block text-sm font-medium text-gray-700">備註</label><textarea id="remarks" rows="2" class="form-input mt-1 block w-full" placeholder="任何特殊事項..."></textarea></div>
-                        <button type="submit" id="submitButton" class="btn w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md shadow-md">登記進場</button>
-                    </form>
-                </div>
+    <!-- 頁面頂部的控制項 (非列印區域) -->
+    <header class="no-print p-4 bg-white shadow-md sticky top-0">
+        <div class="container mx-auto flex justify-between items-center flex-wrap gap-4">
+            <div>
+                <h1 class="text-xl font-bold text-gray-800">A4 列印模板 (含下拉選單)</h1>
+                <p class="text-sm text-gray-500">4 欄 x 5 列，每格 4.5x5cm，上下邊距 2cm</p>
             </div>
             
-            <div class="lg:col-span-2 space-y-8">
-                <div class="bg-white p-6 rounded-xl shadow-lg">
-                    <h2 class="text-2xl font-semibold mb-4 text-blue-700">場內車輛</h2>
-                    <div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th scope="col" class="px-4 py-3">車號</th><th scope="col" class="px-4 py-3">澆置位置</th><th scope="col" class="px-4 py-3">方數</th><th scope="col" class="px-4 py-3">進場時間</th><th scope="col" class="px-4 py-3">操作</th></tr></thead><tbody id="onSiteTableBody"></tbody></table></div>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-lg">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-2xl font-semibold text-gray-600">離場紀錄</h2>
-                        <button id="exportButton" class="btn bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold py-2 px-4 rounded-md shadow-md flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>匯出今日紀錄 (Excel)</button>
-                    </div>
-                    <div class="table-wrapper overflow-x-auto"><table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0"><tr><th scope="col" class="px-4 py-3">車號</th><th scope="col" class="px-4 py-3">澆置位置</th><th scope="col" class="px-4 py-3">進場</th><th scope="col" class="px-4 py-3">離場</th><th scope="col" class="px-4 py-3">停留時間</th><th scope="col" class="px-4 py-3">操作</th></tr></thead><tbody id="historyTableBody"></tbody></table></div>
-                </div>
+            <!-- 合併控制項 -->
+            <div class="flex items-center gap-2 flex-wrap">
+                <label for="row-to-merge" class="text-sm font-medium text-gray-700">列號:</label>
+                <input type="number" id="row-to-merge" min="1" max="5" class="w-20 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="1-5">
+                <label for="cols-to-merge" class="text-sm font-medium text-gray-700">欄號:</label>
+                <input type="text" id="cols-to-merge" class="w-28 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="例: 1-3 或 2,3">
+                <button id="merge-btn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-transform transform hover:scale-105">合併</button>
+                <button id="reset-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-transform transform hover:scale-105">重設版面</button>
+                <span id="message-box" class="text-red-500 text-sm font-semibold ml-2"></span>
             </div>
-        </main>
-    </div>
-    
-    <!-- Modals -->
-    <div id="departureModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 h-full w-full hidden modal-backdrop z-10"><div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white modal-content transform scale-95"><div class="mt-3 text-center"><h3 class="text-lg leading-6 font-medium text-gray-900">確認離場</h3><div class="mt-2 px-7 py-3"><p class="text-sm text-gray-500" id="modalTruckInfo"></p></div><div class="items-center px-4 py-3 gap-2 flex"><button id="cancelDepartureButton" class="btn px-4 py-2 bg-gray-200 text-gray-800 rounded-md w-full shadow-sm hover:bg-gray-300">取消</button><button id="confirmDepartureButton" class="btn px-4 py-2 bg-red-500 text-white rounded-md w-full shadow-sm hover:bg-red-600">確認離場</button></div></div></div></div>
-    <div id="timeoutModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 h-full w-full hidden modal-backdrop z-20"><div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white modal-content transform scale-95"><div class="mt-3 text-center"><div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100"><svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div><h3 class="text-lg leading-6 font-medium text-gray-900 mt-2">拌合超時警告</h3><div class="mt-2 px-7 py-3"><p class="text-sm text-gray-500">拌合超時，是否退料，請聯繫主管恩！？</p></div><div class="items-center px-4 py-3 gap-2 flex"><button id="cancelTimeoutButton" class="btn px-4 py-2 bg-gray-200 text-gray-800 rounded-md w-full shadow-sm hover:bg-gray-300">取消登記</button><button id="confirmTimeoutButton" class="btn px-4 py-2 bg-yellow-500 text-white rounded-md w-full shadow-sm hover:bg-yellow-600">強制進場</button></div></div></div></div>
-    <div id="editModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 h-full w-full hidden modal-backdrop z-30"><div class="relative top-10 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white modal-content transform scale-95"><form id="editTruckForm" class="space-y-4"><h3 class="text-xl leading-6 font-medium text-gray-900">編輯紀錄</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="edit_pourLocation" class="block text-sm font-medium text-gray-700">澆置位置</label><input type="text" id="edit_pourLocation" required class="form-input mt-1 block w-full"></div><div><label for="edit_mixingTime" class="block text-sm font-medium text-gray-700">拌合時間</label><input type="time" id="edit_mixingTime" required class="form-input mt-1 block w-full"></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="edit_truckNumber" class="block text-sm font-medium text-gray-700">車號</label><input type="text" id="edit_truckNumber" required class="form-input mt-1 block w-full"></div><div><label for="edit_volume" class="block text-sm font-medium text-gray-700">方數 (m³)</label><input type="number" id="edit_volume" step="0.1" required class="form-input mt-1 block w-full"></div></div><div><label for="edit_concreteStrength" class="block text-sm font-medium text-gray-700">強度 (kgf/cm²)</label><input type="text" id="edit_concreteStrength" required class="form-input mt-1 block w-full"></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div><label for="edit_slump" class="block text-sm font-medium text-gray-700">坍度 (cm)</label><input type="text" id="edit_slump" class="form-input mt-1 block w-full"></div><div><label for="edit_chloride" class="block text-sm font-medium text-gray-700">氯離子</label><input type="text" id="edit_chloride" class="form-input mt-1 block w-full"></div><div><label for="edit_temperature" class="block text-sm font-medium text-gray-700">溫度 (°C)</label><input type="text" id="edit_temperature" class="form-input mt-1 block w-full"></div></div><div><label for="edit_remarks" class="block text-sm font-medium text-gray-700">備註</label><textarea id="edit_remarks" rows="2" class="form-input mt-1 block w-full"></textarea></div><div class="items-center pt-3 gap-2 flex"><button id="cancelEditButton" type="button" class="btn px-4 py-2 bg-gray-200 text-gray-800 rounded-md w-full shadow-sm hover:bg-gray-300">取消</button><button type="submit" class="btn px-4 py-2 bg-green-600 text-white rounded-md w-full shadow-sm hover:bg-green-700">儲存變更</button></div></form></div></div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+            <button onclick="window.print()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-transform transform hover:scale-105">
+                🖨️ 列印此頁面
+            </button>
+        </div>
+    </header>
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "DEMO", authDomain: "DEMO", projectId: "DEMO" };
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : undefined;
+    <!-- A4 頁面預覽容器 -->
+    <main>
+        <div id="page" class="page-container">
+            <div id="grid" class="grid-container">
+                <!-- JavaScript 會自動生成 20 個可編輯的儲存格 -->
+            </div>
+        </div>
+    </main>
 
-        let db, auth, currentUserId = null;
-        const TRUCK_LOG_COLLECTION = `/artifacts/${appId}/public/data/concrete_log`;
-        let allTrucksCache = [];
-        let truckIdToDepart = null;
-        let recordIdToEdit = null;
-        let pourLocationStates = {};
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const gridContainer = document.getElementById('grid');
+            const mergeBtn = document.getElementById('merge-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const rowInput = document.getElementById('row-to-merge');
+            const colInput = document.getElementById('cols-to-merge');
+            const messageBox = document.getElementById('message-box');
+            const totalCells = 20;
+            const cols = 4;
 
-        const dailySetupSection = document.getElementById('dailySetupSection');
-        const mainApp = document.getElementById('mainApp');
-        const startDayButton = document.getElementById('startDayButton');
-        const changeSettingsButton = document.getElementById('changeSettingsButton');
-        const departureModal = document.getElementById('departureModal');
-        const confirmDepartureButton = document.getElementById('confirmDepartureButton');
-        const cancelDepartureButton = document.getElementById('cancelDepartureButton');
-        const timeoutModal = document.getElementById('timeoutModal');
-        const confirmTimeoutButton = document.getElementById('confirmTimeoutButton');
-        const cancelTimeoutButton = document.getElementById('cancelTimeoutButton');
-        const editModal = document.getElementById('editModal');
-        const cancelEditButton = document.getElementById('cancelEditButton');
-        const exportButton = document.getElementById('exportButton');
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            try {
-                initializeApp(firebaseConfig);
-                db = getFirestore();
-                auth = getAuth();
-                authenticateAndRun();
-                setupEventListeners();
-                loadDailySettings();
-            } catch (error) {
-                console.error("Firebase 初始化失敗:", error);
-                updateSyncStatus('error');
+            // *** 在這裡修改或新增人員名單 ***
+            const personnel = ["王大明", "陳小美", "林志偉", "張雅婷", "黃建宏", "李宗翰"];
+
+            // 顯示訊息並在幾秒後淡出
+            function showMessage(text, isError = true) {
+                messageBox.textContent = text;
+                messageBox.className = isError ? 'text-red-500 text-sm font-semibold ml-2' : 'text-green-500 text-sm font-semibold ml-2';
+                setTimeout(() => {
+                    messageBox.textContent = '';
+                }, 3000);
             }
-        });
 
-        async function authenticateAndRun() {
-            onAuthStateChanged(auth, user => {
-                if (user) {
-                    currentUserId = user.uid;
-                    document.getElementById('userInfo').textContent = `操作人員ID: ${user.uid.substring(0,8)}...`;
-                    fetchAndDisplayTrucks();
-                } else { signInUser(); }
-            });
-        }
+            // 產生初始網格
+            function createGrid() {
+                gridContainer.innerHTML = ''; // 清空現有網格
+                for (let i = 1; i <= totalCells; i++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('grid-cell');
+                    cell.id = `cell-${i}`;
 
-        async function signInUser() {
-            try {
-                if (initialAuthToken) { await signInWithCustomToken(auth, initialAuthToken); } 
-                else { await signInAnonymously(auth); }
-            } catch (error) { console.error("登入失敗:", error); updateSyncStatus('error'); }
-        }
-        
-        function setupEventListeners() {
-            startDayButton.addEventListener('click', handleStartDay);
-            changeSettingsButton.addEventListener('click', () => {
-                dailySetupSection.style.display = 'block';
-                mainApp.classList.add('hidden');
-            });
-            cancelDepartureButton.addEventListener('click', hideDepartureModal);
-            confirmDepartureButton.addEventListener('click', () => {
-                if (truckIdToDepart) { departTruck(truckIdToDepart); hideDepartureModal(); }
-            });
-            cancelTimeoutButton.addEventListener('click', () => {
-                hideTimeoutModal();
-                document.getElementById('submitButton').disabled = false;
-                document.getElementById('submitButton').textContent = '登記進場';
-            });
-            cancelEditButton.addEventListener('click', hideEditModal);
-            document.getElementById('addTruckForm').addEventListener('submit', handleFormSubmit);
-            document.getElementById('editTruckForm').addEventListener('submit', handleEditFormSubmit);
-            ['pourLocation', 'volume', 'remarks', 'slump'].forEach(id => document.getElementById(id).addEventListener('input', () => updatePouringStatus()));
-            ['earlySampleCheckbox', 'delaySampleCheckbox'].forEach(id => document.getElementById(id).addEventListener('change', () => updatePouringStatus()));
-            exportButton.addEventListener('click', exportToCsv);
-        }
+                    // --- 建立格子內的結構 ---
+                    const headerDiv = document.createElement('div');
+                    headerDiv.classList.add('cell-header');
+                    
+                    const toSpan = document.createElement('span');
+                    toSpan.textContent = 'To：';
 
-        function handleStartDay() {
-            const projectName = document.getElementById('dailyProjectName').value.trim();
-            const supplier = document.getElementById('dailySupplier').value.trim();
-            if (!projectName || !supplier) { return alert('請填寫工程名稱和供應商'); }
-            const today = new Date().toDateString();
-            localStorage.setItem('dailySettings', JSON.stringify({ projectName, supplier, date: today }));
-            showMainApp(projectName, supplier);
-        }
+                    // 建立下拉選單 (螢幕上顯示)
+                    const selectEl = document.createElement('select');
+                    selectEl.classList.add('personnel-select', 'no-print');
+                    
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = '請選擇';
+                    selectEl.appendChild(defaultOption);
 
-        function loadDailySettings() {
-            const settingsStr = localStorage.getItem('dailySettings');
-            if (settingsStr) {
-                const settings = JSON.parse(settingsStr);
-                if (settings.date === new Date().toDateString()) {
-                    document.getElementById('dailyProjectName').value = settings.projectName;
-                    document.getElementById('dailySupplier').value = settings.supplier;
-                    showMainApp(settings.projectName, settings.supplier);
-                } else { localStorage.removeItem('dailySettings'); }
-            }
-        }
+                    personnel.forEach(name => {
+                        const option = document.createElement('option');
+                        option.value = name;
+                        option.textContent = name;
+                        selectEl.appendChild(option);
+                    });
 
-        function showMainApp(projectName, supplier) {
-            document.getElementById('displayProjectName').textContent = projectName;
-            document.getElementById('displaySupplier').textContent = supplier;
-            dailySetupSection.style.display = 'none';
-            mainApp.classList.remove('hidden');
-        }
+                    // 建立列印時顯示的姓名 Span
+                    const printNameSpan = document.createElement('span');
+                    printNameSpan.classList.add('print-only-name');
+                    printNameSpan.textContent = ' '; // 預設為空白，讓底線顯示
 
-        async function handleFormSubmit(e) {
-            e.preventDefault();
-            if (!currentUserId) { return alert("錯誤：使用者未登入"); }
-            const form = e.target;
-            const submitButton = form.querySelector('button[type="submit"]');
-            submitButton.disabled = true;
-            submitButton.textContent = '處理中...';
-            const truckData = getTruckDataFromForm(form);
-            const mixingTimeValue = form.mixingTime.value;
-            if (!mixingTimeValue) {
-                alert('請輸入拌合時間');
-                submitButton.disabled = false;
-                submitButton.textContent = '登記進場';
-                return;
-            }
-            const now = new Date();
-            const [hours, minutes] = mixingTimeValue.split(':');
-            const mixingTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
-            const diffMinutes = (now - mixingTime) / 60000;
-            if (diffMinutes > 90) {
-                const isConfirmed = await showTimeoutModal();
-                if (isConfirmed) {
-                    truckData.remarks = `拌合超時; ${truckData.remarks}`;
-                    await saveTruckData(truckData, form);
-                } else {
-                    submitButton.disabled = false;
-                    submitButton.textContent = '登記進場';
+                    // 建立可編輯內容區域
+                    const editableDiv = document.createElement('div');
+                    editableDiv.classList.add('editable-content');
+                    editableDiv.contentEditable = 'true';
+
+                    // 監聽下拉選單的變化，更新列印用的 Span
+                    selectEl.addEventListener('change', (e) => {
+                        const selectedValue = e.target.value;
+                        printNameSpan.textContent = selectedValue || ' '; // 如果沒選，就顯示空白
+                    });
+
+                    headerDiv.appendChild(toSpan);
+                    headerDiv.appendChild(selectEl);
+                    headerDiv.appendChild(printNameSpan);
+                    cell.appendChild(headerDiv);
+                    cell.appendChild(editableDiv);
+                    
+                    gridContainer.appendChild(cell);
                 }
-            } else { await saveTruckData(truckData, form); }
-        }
-
-        async function handleEditFormSubmit(e) {
-            e.preventDefault();
-            if (!recordIdToEdit) return;
-            const form = e.target;
-            const submitButton = form.querySelector('button[type="submit"]');
-            submitButton.disabled = true;
-            submitButton.textContent = '儲存中...';
-            const updatedData = {
-                pourLocation: form.edit_pourLocation.value.trim(),
-                truckNumber: form.edit_truckNumber.value.trim(),
-                mixingTime: form.edit_mixingTime.value,
-                volume: parseFloat(form.edit_volume.value) || 0,
-                concreteStrength: form.edit_concreteStrength.value.trim(),
-                slump: form.edit_slump.value.trim(),
-                chloride: form.edit_chloride.value.trim(),
-                temperature: form.edit_temperature.value.trim(),
-                remarks: form.edit_remarks.value.trim(),
-            };
-            await updateTruckRecord(recordIdToEdit, updatedData);
-            hideEditModal();
-            submitButton.disabled = false;
-            submitButton.textContent = '儲存變更';
-        }
-        
-        function getTruckDataFromForm(form) {
-            const dailySettings = JSON.parse(localStorage.getItem('dailySettings'));
-            const pourLocation = form.pourLocation.value.trim();
-            const state = pourLocationStates[pourLocation] || {};
-            const isEarly = form.earlySampleCheckbox.checked;
-            const isSlumpCheck = state.isSlumpCheck;
-            let sampleType = null;
-            if (form.slump.value) {
-                if (state.isMandatoryTail || state.isDelayingTail) { sampleType = 'tail'; } 
-                else if (state.isMandatoryHead || state.isDelayingHead || isSlumpCheck || isEarly) { sampleType = 'head'; }
             }
-            return {
-                projectName: dailySettings.projectName, supplier: dailySettings.supplier,
-                pourLocation: pourLocation, truckNumber: form.truckNumber.value.trim(),
-                mixingTime: form.mixingTime.value, volume: parseFloat(form.volume.value) || 0,
-                concreteStrength: form.concreteStrength.value.trim(), slump: form.slump.value.trim(),
-                chloride: form.chloride.value.trim(), temperature: form.temperature.value.trim(),
-                remarks: form.remarks.value.trim(), status: 'on-site',
-                arrivalTime: serverTimestamp(), departureTime: null, userId: currentUserId,
-                earlySample: form.earlySampleCheckbox.checked, delayedSample: form.delaySampleCheckbox.checked,
-                sampleType: sampleType
-            };
-        }
 
-        async function saveTruckData(truckData, form) {
-            updateSyncStatus('pending');
-            try {
-                await addDoc(collection(db, TRUCK_LOG_COLLECTION), truckData);
-                ['truckNumber', 'volume', 'remarks', 'slump', 'chloride', 'temperature', 'mixingTime'].forEach(id => form[id].value = '');
-                ['earlySampleCheckbox', 'delaySampleCheckbox'].forEach(id => form[id].checked = false);
-                updatePouringStatus();
-            } catch (error) {
-                console.error("登記車輛失敗: ", error); alert("登記失敗"); updateSyncStatus('error');
-            } finally {
-                const submitButton = form.querySelector('button[type="submit"]');
-                if (submitButton) { submitButton.disabled = false; submitButton.textContent = '登記進場'; }
-            }
-        }
+            // 解析並驗證欄位輸入字串
+            function parseAndValidateColumns(str) {
+                const columns = new Set();
+                if (!str || !str.trim()) return null;
 
-        async function updateTruckRecord(docId, updatedData) {
-            const truckDocRef = doc(db, TRUCK_LOG_COLLECTION, docId);
-            updateSyncStatus('pending');
-            try {
-                await updateDoc(truckDocRef, updatedData);
-            } catch (error) {
-                console.error("更新紀錄失敗: ", error); alert("更新失敗"); updateSyncStatus('error');
-            }
-        }
-        
-        function departTruck(docId) {
-            const truckDocRef = doc(db, TRUCK_LOG_COLLECTION, docId);
-            updateSyncStatus('pending');
-            updateDoc(truckDocRef, { status: 'departed', departureTime: serverTimestamp() })
-                .catch(error => { console.error("更新離場狀態失敗: ", error); alert("更新失敗"); updateSyncStatus('error'); });
-        }
-        
-        function initializePourLocationState(location, allTrucks) {
-            if (!pourLocationStates[location]) { pourLocationStates[location] = {}; }
-            const state = pourLocationStates[location];
-            const today = new Date().toDateString();
-            const locationTrucksToday = allTrucks.filter(t => t.pourLocation === location && t.arrivalTime?.toDate()?.toDateString() === today).sort((a, b) => a.arrivalTime.toDate() - b.arrivalTime.toDate());
-            Object.assign(state, { headSamplesTaken: 0, tailSamplesTaken: 0, headSamplesSkipped: 0, tailSamplesSkipped: 0, isDelayingHead: false, isDelayingTail: false, slumpCheckDone: false });
-            let cumulativeVolume = 0, requiredHead = 0, requiredTail = 0;
-            locationTrucksToday.forEach(truck => {
-                const hasSampleData = truck.slump && (truck.chloride || truck.temperature);
-                if(truck.earlySample && hasSampleData) {
-                    if(state.headSamplesTaken <= state.tailSamplesTaken) { state.headSamplesTaken++; state.headSamplesSkipped++; } 
-                    else { state.tailSamplesTaken++; state.tailSamplesSkipped++; }
-                }
-                let newRequiredHead = Math.floor(cumulativeVolume / 100);
-                let newRequiredTail = Math.floor(cumulativeVolume / 300);
-                if (newRequiredHead > requiredHead) {
-                    if (state.headSamplesSkipped > 0) state.headSamplesSkipped--;
-                    else if (truck.delayedSample) state.isDelayingHead = true;
-                    else if (hasSampleData) { state.headSamplesTaken++; state.isDelayingHead = false; }
-                }
-                if (newRequiredTail > requiredTail) {
-                    if (state.tailSamplesSkipped > 0) state.tailSamplesSkipped--;
-                    else if (truck.delayedSample) state.isDelayingTail = true;
-                    else if (hasSampleData) { state.tailSamplesTaken++; state.isDelayingTail = false; }
-                }
-                if (truck.slump) state.slumpCheckDone = true;
-                cumulativeVolume += truck.volume || 0;
-                requiredHead = newRequiredHead;
-                requiredTail = newRequiredTail;
-            });
-            return state;
-        }
-
-        function fetchAndDisplayTrucks() {
-            const q = query(collection(db, TRUCK_LOG_COLLECTION));
-            onSnapshot(q, (snapshot) => {
-                updateSyncStatus(snapshot.metadata.hasPendingWrites ? 'pending' : 'synced');
-                allTrucksCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const onSiteTrucks = allTrucksCache.filter(t => t.status === 'on-site').sort((a, b) => (a.arrivalTime?.toDate() || 0) - (b.arrivalTime?.toDate() || 0));
-                const departedTrucks = allTrucksCache.filter(t => t.status !== 'on-site').sort((a, b) => (b.departureTime?.toDate() || 0) - (a.departureTime?.toDate() || 0));
-                renderOnSiteTable(onSiteTrucks);
-                renderHistoryTable(departedTrucks);
-                updatePouringStatus();
-            }, (error) => { console.error("讀取車輛紀錄失敗: ", error); updateSyncStatus('error'); });
-        }
-        
-        function updatePouringStatus() {
-            const dailySettings = JSON.parse(localStorage.getItem('dailySettings'));
-            if (!dailySettings) return;
-            const pourLocation = document.getElementById('pourLocation').value.trim();
-            const volumeSpan = document.getElementById('totalVolumeToday'), alertsDiv = document.getElementById('specimenAlerts');
-            const slumpField = document.getElementById('slumpField'), otherSamplingFields = document.getElementById('otherSamplingFields');
-            const slumpInput = document.getElementById('slump'), chlorideInput = document.getElementById('chloride');
-            const samplingOptions = document.getElementById('samplingOptions'), slumpCheckReminder = document.getElementById('slumpCheckReminder'), delayedSampleReminder = document.getElementById('delayedSampleReminder');
-            if (!pourLocation) { volumeSpan.textContent = '0 m³'; alertsDiv.innerHTML = ''; return; }
-            const today = new Date().toDateString();
-            const locationTrucksToday = allTrucksCache.filter(t => t.pourLocation === pourLocation && t.arrivalTime?.toDate()?.toDateString() === today);
-            const truckCount = locationTrucksToday.length;
-            const previousTotalVolume = locationTrucksToday.reduce((sum, t) => sum + (t.volume || 0), 0);
-            const state = initializePourLocationState(pourLocation, allTrucksCache);
-            volumeSpan.textContent = `${previousTotalVolume.toFixed(2)} m³`;
-            const isFirstTruck = truckCount === 0, remarks = document.getElementById('remarks').value, isLubricationPipe = remarks.includes('潤管');
-            const showSlumpCheck = isFirstTruck && !isLubricationPipe && !state.slumpCheckDone;
-            state.isSlumpCheck = showSlumpCheck;
-            const showSlumpReminder = (truckCount < 5 || isFirstTruck) && !isLubricationPipe && !state.slumpCheckDone;
-            slumpCheckReminder.classList.toggle('hidden', !showSlumpReminder);
-            const currentEntryVolume = parseFloat(document.getElementById('volume').value) || 0;
-            const prospectiveTotalVolume = previousTotalVolume + currentEntryVolume;
-            let requiredHead = Math.floor(previousTotalVolume / 100), requiredTail = Math.floor(previousTotalVolume / 300);
-            let prospectiveHead = Math.floor(prospectiveTotalVolume / 100), prospectiveTail = Math.floor(prospectiveTotalVolume / 300);
-            state.isMandatoryHead = prospectiveHead > requiredHead && state.headSamplesSkipped === 0;
-            state.isMandatoryTail = prospectiveTail > requiredTail && state.tailSamplesSkipped === 0;
-            const isEarlySample = document.getElementById('earlySampleCheckbox').checked, isDelayingSample = document.getElementById('delaySampleCheckbox').checked;
-            const isMandatory = state.isMandatoryHead || state.isMandatoryTail || state.isDelayingHead || state.isDelayingTail;
-            samplingOptions.classList.toggle('hidden', !isMandatory && !isEarlySample);
-            const showAllSampleFields = (isMandatory && !isDelayingSample) || isEarlySample;
-            slumpField.classList.toggle('hidden', !showAllSampleFields && !showSlumpCheck);
-            otherSamplingFields.classList.toggle('hidden', !showAllSampleFields);
-            slumpInput.required = showAllSampleFields; chlorideInput.required = showAllSampleFields;
-            delayedSampleReminder.classList.toggle('hidden', !state.isDelayingHead && !state.isDelayingTail);
-            alertsDiv.innerHTML = `<div class="p-2 rounded-md bg-blue-100 text-blue-800">應取管頭試體組數：${state.headSamplesTaken}/${requiredHead+1}</div><div class="p-2 rounded-md bg-yellow-100 text-yellow-800 mt-2">應取管尾試體組數：${state.tailSamplesTaken}/${requiredTail+1}</div>`;
-        }
-        
-        function renderOnSiteTable(data) {
-            const tableBody = document.getElementById('onSiteTableBody');
-            if (data.length === 0) { return updateTableBody('onSiteTableBody', 5, '目前沒有車輛在場內。'); }
-            tableBody.innerHTML = data.map(item => `
-                <tr class="bg-white border-b hover:bg-gray-50">
-                    <td class="px-4 py-4 font-medium text-gray-900">${item.truckNumber}</td><td class="px-4 py-4">${item.pourLocation}</td><td class="px-4 py-4">${item.volume} m³</td>
-                    <td class="px-4 py-4">${item.arrivalTime ? item.arrivalTime.toDate().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</td>
-                    <td class="px-4 py-4 flex items-center gap-2">
-                        <button data-id="${item.id}" class="btn edit-btn text-blue-600 hover:text-blue-800 p-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg></button>
-                        <button data-id="${item.id}" data-truck-number="${item.truckNumber}" class="btn depart-btn bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-2 px-3 rounded-md">離場</button>
-                    </td>
-                </tr>`).join('');
-            document.querySelectorAll('.depart-btn').forEach(button => button.addEventListener('click', (e) => showDepartureModal(e.currentTarget.dataset.id, e.currentTarget.dataset.truckNumber)));
-            document.querySelectorAll('.edit-btn').forEach(button => button.addEventListener('click', (e) => showEditModal(e.currentTarget.dataset.id)));
-        }
-        
-        function renderHistoryTable(data) {
-            const tableBody = document.getElementById('historyTableBody');
-            if (data.length === 0) { return updateTableBody('historyTableBody', 6, '目前沒有離場紀錄。'); }
-            tableBody.innerHTML = data.map(item => {
-                const arrival = item.arrivalTime?.toDate(), departure = item.departureTime?.toDate();
-                const dwellTime = (arrival && departure) ? `${Math.round((departure - arrival) / 60000)} 分鐘` : 'N/A';
-                return `
-                <tr class="bg-white border-b hover:bg-gray-50">
-                    <td class="px-4 py-4 font-medium text-gray-900">${item.truckNumber}</td><td class="px-4 py-4">${item.pourLocation}</td>
-                    <td class="px-4 py-4">${arrival ? arrival.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</td>
-                    <td class="px-4 py-4">${departure ? departure.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</td>
-                    <td class="px-4 py-4 font-semibold">${dwellTime}</td>
-                    <td class="px-4 py-4 flex items-center gap-2">
-                        <span class="text-xs max-w-[100px] truncate" title="${item.remarks || ''}">${item.remarks || '-'}</span>
-                        <button data-id="${item.id}" class="btn edit-btn text-blue-600 hover:text-blue-800 p-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg></button>
-                    </td>
-                </tr>`;
-            }).join('');
-            document.querySelectorAll('.edit-btn').forEach(button => button.addEventListener('click', (e) => showEditModal(e.currentTarget.dataset.id)));
-        }
-
-        function updateTableBody(bodyId, colSpan, message) { document.getElementById(bodyId).innerHTML = `<tr><td colspan="${colSpan}" class="text-center p-6 text-gray-500">${message}</td></tr>`; }
-        function showDepartureModal(docId, truckNumber) {
-            truckIdToDepart = docId;
-            document.getElementById('modalTruckInfo').textContent = `是否確認車號「${truckNumber}」離場？`;
-            departureModal.classList.remove('hidden');
-            setTimeout(() => departureModal.querySelector('.modal-content').classList.replace('scale-95', 'scale-100'), 10);
-        }
-        function hideDepartureModal() {
-            truckIdToDepart = null;
-            departureModal.querySelector('.modal-content').classList.replace('scale-100', 'scale-95');
-            setTimeout(() => departureModal.classList.add('hidden'), 300);
-        }
-        async function showTimeoutModal() {
-            return new Promise((resolve) => {
-                timeoutModal.classList.remove('hidden');
-                setTimeout(() => timeoutModal.querySelector('.modal-content').classList.replace('scale-95', 'scale-100'), 10);
-                confirmTimeoutButton.onclick = () => { hideTimeoutModal(); resolve(true); };
-                cancelTimeoutButton.onclick = () => { hideTimeoutModal(); resolve(false); };
-            });
-        }
-        function hideTimeoutModal() {
-            timeoutModal.querySelector('.modal-content').classList.replace('scale-100', 'scale-95');
-            setTimeout(() => timeoutModal.classList.add('hidden'), 300);
-        }
-        function showEditModal(docId) {
-            recordIdToEdit = docId;
-            const record = allTrucksCache.find(t => t.id === docId);
-            if (!record) return;
-            const form = document.getElementById('editTruckForm');
-            form.edit_pourLocation.value = record.pourLocation || '';
-            form.edit_truckNumber.value = record.truckNumber || '';
-            form.edit_mixingTime.value = record.mixingTime || '';
-            form.edit_volume.value = record.volume || '';
-            form.edit_concreteStrength.value = record.concreteStrength || '';
-            form.edit_slump.value = record.slump || '';
-            form.edit_chloride.value = record.chloride || '';
-            form.edit_temperature.value = record.temperature || '';
-            form.edit_remarks.value = record.remarks || '';
-            editModal.classList.remove('hidden');
-            setTimeout(() => editModal.querySelector('.modal-content').classList.replace('scale-95', 'scale-100'), 10);
-        }
-        function hideEditModal() {
-            recordIdToEdit = null;
-            editModal.querySelector('.modal-content').classList.replace('scale-100', 'scale-95');
-            setTimeout(() => editModal.classList.add('hidden'), 300);
-        }
-        function updateSyncStatus(status) {
-            const statusText = document.getElementById('syncStatusText');
-            const statusDot = document.querySelector('#syncStatus .status-dot');
-            const statusMap = {
-                synced: { text: '所有變更已儲存', color: 'bg-green-500' },
-                pending: { text: '儲存中...', color: 'bg-yellow-400' },
-                error: { text: '連線錯誤', color: 'bg-red-500' }
-            };
-            statusDot.className = `status-dot ${statusMap[status].color}`;
-            statusText.textContent = statusMap[status].text;
-        }
-        function exportToCsv() {
-            const dailySettings = JSON.parse(localStorage.getItem('dailySettings'));
-            if (!dailySettings) { return alert('沒有設定今日工班，無法匯出'); }
-            const today = new Date().toDateString();
-            const recordsToExport = allTrucksCache.filter(t => t.arrivalTime?.toDate()?.toDateString() === today && t.projectName === dailySettings.projectName);
-            if (recordsToExport.length === 0) { return alert('今日尚無任何離場紀錄可匯出'); }
-            recordsToExport.sort((a,b) => (a.arrivalTime?.toDate() || 0) - (b.arrivalTime?.toDate() || 0));
-            const headers = ['車次', '車號', '混凝土數量(M3)本車', '混凝土數量(M3)累計', '拌合時間', '到場灌注時間', '澆置區域', '試體編號', '管頭', '管尾', '坍度(cm)', '氯離子(kg/m3)', '溫度(℃)', '備註'];
-            let cumulativeVolume = 0;
-            let testSampleCounter = 0;
-            const rows = recordsToExport.map((item, index) => {
-                cumulativeVolume += item.volume || 0;
-                const arrival = item.arrivalTime?.toDate();
-                let sampleId = '', isHead = '', isTail = '';
-                if (item.slump) {
-                    testSampleCounter++;
-                    sampleId = testSampleCounter;
-                    if (item.sampleType === 'tail') {
-                        isTail = 'V';
-                    } else { 
-                        isHead = 'V';
+                const parts = str.split(',');
+                for (const part of parts) {
+                    const trimmedPart = part.trim();
+                    if (trimmedPart.includes('-')) {
+                        const [start, end] = trimmedPart.split('-').map(Number);
+                        if (isNaN(start) || isNaN(end) || start < 1 || end > cols || start >= end) return null;
+                        for (let i = start; i <= end; i++) columns.add(i);
+                    } else {
+                        const num = Number(trimmedPart);
+                        if (isNaN(num) || num < 1 || num > cols) return null;
+                        columns.add(num);
                     }
                 }
-                return [
-                    index + 1, item.truckNumber, item.volume, cumulativeVolume.toFixed(2),
-                    item.mixingTime || '', arrival ? arrival.toLocaleTimeString('zh-TW', { hour12: false }) : '',
-                    item.pourLocation, 
-                    sampleId, isHead, isTail,
-                    item.slump || '', item.chloride || '', item.temperature || '',
-                    `"${(item.remarks || '').replace(/"/g, '""')}"`
-                ];
-            });
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-            csvContent += headers.join(',') + '\r\n';
-            rows.forEach(rowArray => { csvContent += rowArray.join(',') + '\r\n'; });
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            const dateStr = new Date().toISOString().slice(0, 10);
-            link.setAttribute("download", `澆置紀錄表_${dailySettings.projectName}_${dateStr}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+                return Array.from(columns).sort((a, b) => a - b);
+            }
+
+            // 合併指定列的指定欄位
+            function mergeRow() {
+                const row = parseInt(rowInput.value);
+                if (isNaN(row) || row < 1 || row > 5) {
+                    showMessage('請輸入有效的列號 (1-5)');
+                    return;
+                }
+
+                const colStr = colInput.value;
+                const parsedCols = parseAndValidateColumns(colStr);
+
+                if (!parsedCols || parsedCols.length === 0) {
+                    showMessage('請輸入有效的欄號 (例: 1-3 或 2,3)');
+                    return;
+                }
+
+                const isContiguous = parsedCols.length < 2 || (parsedCols[parsedCols.length - 1] - parsedCols[0] + 1 === parsedCols.length);
+                if (!isContiguous) {
+                    showMessage('合併失敗：僅能合併連續的欄位');
+                    return;
+                }
+                
+                const allCells = Array.from(gridContainer.children);
+                const rowStartIndex = (row - 1) * cols;
+
+                for (let i = 0; i < cols; i++) {
+                    const cell = allCells[rowStartIndex + i];
+                    if (cell) {
+                        cell.style.display = '';
+                        cell.style.gridColumn = '';
+                        cell.classList.remove('merged-cell');
+                    }
+                }
+
+                if (parsedCols.length > 1) {
+                    const startCol = parsedCols[0];
+                    const spanCount = parsedCols.length;
+                    const startCellIndex = rowStartIndex + startCol - 1;
+                    
+                    const startCell = allCells[startCellIndex];
+                    if (startCell) {
+                        startCell.classList.add('merged-cell');
+                        startCell.style.gridColumn = `span ${spanCount}`;
+
+                        for (let i = 1; i < spanCount; i++) {
+                            const cellToHide = allCells[startCellIndex + i];
+                            if (cellToHide) cellToHide.style.display = 'none';
+                        }
+                    }
+                }
+                
+                showMessage(`第 ${row} 列已更新`, false);
+            }
+
+            // 重設整個網格版面
+            function resetGrid() {
+                createGrid();
+                showMessage('版面已重設', false);
+            }
+
+            // 綁定事件監聽器
+            mergeBtn.addEventListener('click', mergeRow);
+            resetBtn.addEventListener('click', resetGrid);
+
+            // 初始載入
+            createGrid();
+        });
     </script>
+
 </body>
 </html>
